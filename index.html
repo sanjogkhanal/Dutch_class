@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dutch Listening Games - Auto Player</title>
+    <title>Dutch Listening Games - Random Auto Player</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -55,6 +55,12 @@
             border-radius: 15px;
             margin-bottom: 30px;
             border-left: 5px solid #667eea;
+            transition: all 0.3s;
+        }
+        
+        .random-mode .lesson-info {
+            border-left: 5px solid #9c27b0;
+            background: #f3e5f5;
         }
         
         .lesson-title {
@@ -87,12 +93,39 @@
             font-weight: bold;
         }
         
+        .random-mode .detail-value {
+            color: #9c27b0;
+        }
+        
         .countdown {
             font-size: 4em;
             color: #667eea;
             margin: 30px 0;
             font-weight: bold;
             text-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .random-mode .countdown {
+            color: #9c27b0;
+        }
+        
+        .mode-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .mode-chronological {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .mode-random {
+            background: #f3e5f5;
+            color: #9c27b0;
         }
         
         .controls {
@@ -105,7 +138,6 @@
         
         button {
             padding: 15px 30px;
-            background: #667eea;
             color: white;
             border: none;
             border-radius: 10px;
@@ -119,13 +151,12 @@
         }
         
         button:hover {
-            background: #5a6fd8;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         button:disabled {
-            background: #cccccc;
+            background: #cccccc !important;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
@@ -155,6 +186,22 @@
         
         .skip-btn:hover {
             background: #ff9800;
+        }
+        
+        .random-btn {
+            background: #9c27b0;
+        }
+        
+        .random-btn:hover {
+            background: #7b1fa2;
+        }
+        
+        .chronological-btn {
+            background: #2196f3;
+        }
+        
+        .chronological-btn:hover {
+            background: #1976d2;
         }
         
         select {
@@ -187,6 +234,10 @@
             transition: width 0.3s;
         }
         
+        .random-mode .progress-fill {
+            background: #9c27b0;
+        }
+        
         .progress-text {
             display: flex;
             justify-content: space-between;
@@ -214,9 +265,45 @@
             font-weight: bold;
         }
         
+        .random-mode .stat-value {
+            color: #9c27b0;
+        }
+        
         .stat-label {
             color: #666;
             margin-top: 5px;
+        }
+        
+        .recent-lessons {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .recent-lessons h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .recent-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .recent-lesson {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .instructions {
@@ -263,11 +350,15 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎧 Dutch Listening Games - Auto Player</h1>
-            <p>Automatically opens each listening game one by one</p>
+            <h1>🎲 Dutch Listening Games - Random Mode</h1>
+            <p>Practice lessons in random order for better retention!</p>
         </header>
         
-        <div class="player-panel">
+        <div class="player-panel" id="playerPanel">
+            <div id="modeIndicator" class="mode-indicator mode-chronological">
+                🔄 Chronological Order
+            </div>
+            
             <div class="lesson-info">
                 <div class="lesson-title" id="currentLessonTitle">Ready to Start</div>
                 <div class="lesson-details">
@@ -299,8 +390,18 @@
             </div>
             
             <div class="controls">
+                <button class="chronological-btn" id="chronologicalBtn">
+                    📊 Chronological Order
+                </button>
+                <button class="random-btn" id="randomBtn">
+                    🎲 Random Order
+                </button>
+            </div>
+            
+            <div class="controls">
                 <select id="speedSelect">
-                    <option value="60">1 minute per lesson</option>
+                    <option value="45">45 seconds per lesson</option>
+                    <option value="60" selected>1 minute per lesson</option>
                     <option value="90">1.5 minutes per lesson</option>
                     <option value="120">2 minutes per lesson</option>
                     <option value="180">3 minutes per lesson</option>
@@ -333,7 +434,7 @@
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
                 <div class="progress-text">
-                    <span>Progress</span>
+                    <span id="modeStatus">Chronological Mode</span>
                     <span id="progressText">0/134</span>
                 </div>
             </div>
@@ -347,26 +448,40 @@
                     <div class="stat-value" id="totalCount">134</div>
                     <div class="stat-label">Total Lessons</div>
                 </div>
+                <div class="stat">
+                    <div class="stat-value" id="uniqueCompleted">0</div>
+                    <div class="stat-label">Unique Completed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="randomStreak">0</div>
+                    <div class="stat-label">Random Streak</div>
+                </div>
+            </div>
+            
+            <div class="recent-lessons" id="recentLessonsContainer">
+                <h3>🔄 Recent Lessons</h3>
+                <div class="recent-list" id="recentList">
+                    <div class="recent-lesson">No lessons yet</div>
+                </div>
             </div>
             
             <div class="instructions">
-                <h3>📋 How to Use:</h3>
-                <p>1. Click "Start Auto-Play" to begin</p>
-                <p>2. Each lesson will open in a new tab automatically</p>
-                <p>3. Practice the listening game in the new tab</p>
-                <p>4. After the countdown, the next lesson will open</p>
-                <p>5. Return to this tab to see progress and control playback</p>
+                <h3>🎲 Random Mode Benefits:</h3>
+                <p>• <strong>Better Memory Retention</strong>: Random order prevents pattern recognition</p>
+                <p>• <strong>Active Recall</strong>: Forces brain to work harder, strengthening memory</p>
+                <p>• <strong>Prevents Boredom</strong>: Mix of topics keeps practice interesting</p>
+                <p>• <strong>Real-world Preparation</strong>: Conversations don't follow a script!</p>
             </div>
         </div>
         
         <footer>
-            <p>💡 <strong>Tip:</strong> Keep this tab open and practice in the new tabs that open automatically!</p>
+            <p>💡 <strong>Tip:</strong> Use Random Mode to challenge yourself and improve retention!</p>
             <p style="margin-top: 10px;">All content © LingoHut.com</p>
         </footer>
     </div>
     
     <script>
-        // All lessons data
+        // All lessons data (truncated for brevity, include all 134)
         const allLessons = [
             // Basics & Greetings
             { number: 1, title: "Meeting someone", category: "basics", url: "https://www.lingohut.com/en/v772613L/dutch-lessons-meeting-someone/listening-game" },
@@ -390,24 +505,34 @@
             { number: 83, title: "Time vocabulary", category: "numbers", url: "https://www.lingohut.com/en/v772695L/dutch-lessons-time-vocabulary/listening-game" },
             { number: 84, title: "Time and date", category: "numbers", url: "https://www.lingohut.com/en/v772696L/dutch-lessons-time-and-date/listening-game" },
             
-            // School & Learning
+            // Add the rest of your 134 lessons here...
+            // For this example, I'll add a few more but you should add all
             { number: 14, title: "School supplies", category: "school", url: "https://www.lingohut.com/en/v772626L/dutch-lessons-school-supplies/listening-game" },
             { number: 15, title: "Classroom", category: "school", url: "https://www.lingohut.com/en/v772627L/dutch-lessons-classroom/listening-game" },
             { number: 16, title: "School subjects", category: "school", url: "https://www.lingohut.com/en/v772628L/dutch-lessons-school-subjects/listening-game" },
-            
-            // Add more lessons here (truncated for brevity, but include all from your list)
-            // ... continue with all 134 lessons
+            { number: 17, title: "Colors", category: "science", url: "https://www.lingohut.com/en/v772629L/dutch-lessons-colors/listening-game" },
+            { number: 18, title: "Geography", category: "science", url: "https://www.lingohut.com/en/v772630L/dutch-lessons-geography/listening-game" },
+            { number: 19, title: "Astronomy", category: "science", url: "https://www.lingohut.com/en/v772631L/dutch-lessons-astronomy/listening-game" },
+            { number: 20, title: "Solar system", category: "science", url: "https://www.lingohut.com/en/v772632L/dutch-lessons-solar-system/listening-game" },
+            { number: 21, title: "Seasons and weather", category: "science", url: "https://www.lingohut.com/en/v772633L/dutch-lessons-seasons-and-weather/listening-game" },
+            // ... add all remaining lessons
         ];
 
         // State variables
         let currentIndex = 0;
         let isPlaying = false;
+        let isRandomMode = false;
         let countdownTimer = null;
         let timeLeft = 60;
         let filteredLessons = [...allLessons];
         let completedLessons = new Set();
+        let recentLessons = [];
+        let randomStreak = 0;
+        let randomOrder = [];
         
         // DOM elements
+        const playerPanel = document.getElementById('playerPanel');
+        const modeIndicator = document.getElementById('modeIndicator');
         const currentLessonTitle = document.getElementById('currentLessonTitle');
         const currentLessonNumber = document.getElementById('currentLessonNumber');
         const currentCategory = document.getElementById('currentCategory');
@@ -415,11 +540,19 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const skipBtn = document.getElementById('skipBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const chronologicalBtn = document.getElementById('chronologicalBtn');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
+        const modeStatus = document.getElementById('modeStatus');
         const completedCount = document.getElementById('completedCount');
+        const uniqueCompleted = document.getElementById('uniqueCompleted');
+        const randomStreakDisplay = document.getElementById('randomStreak');
+        const totalCount = document.getElementById('totalCount');
         const speedSelect = document.getElementById('speedSelect');
         const categorySelect = document.getElementById('categorySelect');
+        const recentList = document.getElementById('recentList');
+        const recentLessonsContainer = document.getElementById('recentLessonsContainer');
         
         // Category names
         const categoryNames = {
@@ -444,25 +577,111 @@
         // Initialize
         function init() {
             // Load saved progress
-            const savedProgress = localStorage.getItem('dutchAutoPlayerProgress');
+            const savedProgress = localStorage.getItem('dutchRandomPlayerProgress');
             if (savedProgress) {
                 const progress = JSON.parse(savedProgress);
                 currentIndex = progress.currentIndex || 0;
                 completedLessons = new Set(progress.completed || []);
+                recentLessons = progress.recentLessons || [];
+                isRandomMode = progress.isRandomMode || false;
+                randomStreak = progress.randomStreak || 0;
             }
             
+            updateModeDisplay();
+            filterLessons();
             updateDisplay();
             updateProgress();
-            updateCompletedCount();
+            updateStats();
+            updateRecentLessons();
+        }
+        
+        // Toggle between random and chronological mode
+        function toggleRandomMode() {
+            isRandomMode = true;
+            updateModeDisplay();
+            
+            // Generate random order
+            generateRandomOrder();
+            
+            // Reset to first in random order
+            currentIndex = 0;
+            
+            // Update display
+            updateDisplay();
+            updateProgress();
+            updateStats();
+            
+            // Save progress
+            saveProgress();
+        }
+        
+        function toggleChronologicalMode() {
+            isRandomMode = false;
+            updateModeDisplay();
+            
+            // Reset to first in chronological order
+            currentIndex = 0;
+            
+            // Update display
+            updateDisplay();
+            updateProgress();
+            updateStats();
+            
+            // Save progress
+            saveProgress();
+        }
+        
+        // Generate random order of lessons
+        function generateRandomOrder() {
+            // Create array of all available indices
+            const availableIndices = Array.from({ length: filteredLessons.length }, (_, i) => i);
+            
+            // Fisher-Yates shuffle algorithm
+            for (let i = availableIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
+            }
+            
+            randomOrder = availableIndices;
+        }
+        
+        // Get current lesson based on mode
+        function getCurrentLesson() {
+            if (isRandomMode) {
+                const randomIndex = randomOrder[currentIndex];
+                return filteredLessons[randomIndex];
+            }
+            return filteredLessons[currentIndex];
         }
         
         // Update display with current lesson
         function updateDisplay() {
             if (currentIndex < filteredLessons.length) {
-                const lesson = filteredLessons[currentIndex];
+                const lesson = getCurrentLesson();
                 currentLessonTitle.textContent = lesson.title;
                 currentLessonNumber.textContent = typeof lesson.number === 'number' ? `Lesson ${lesson.number}` : lesson.number;
                 currentCategory.textContent = categoryNames[lesson.category] || lesson.category;
+            }
+        }
+        
+        // Update mode display
+        function updateModeDisplay() {
+            if (isRandomMode) {
+                playerPanel.classList.add('random-mode');
+                playerPanel.classList.remove('chronological-mode');
+                modeIndicator.className = 'mode-indicator mode-random';
+                modeIndicator.innerHTML = '🎲 Random Order';
+                modeStatus.textContent = 'Random Mode';
+                randomBtn.disabled = true;
+                chronologicalBtn.disabled = false;
+            } else {
+                playerPanel.classList.remove('random-mode');
+                playerPanel.classList.add('chronological-mode');
+                modeIndicator.className = 'mode-indicator mode-chronological';
+                modeIndicator.innerHTML = '🔄 Chronological Order';
+                modeStatus.textContent = 'Chronological Mode';
+                randomBtn.disabled = false;
+                chronologicalBtn.disabled = true;
             }
         }
         
@@ -506,12 +725,34 @@
         // Open current lesson in new tab
         function openCurrentLesson() {
             if (currentIndex < filteredLessons.length) {
-                const lesson = filteredLessons[currentIndex];
+                const lesson = getCurrentLesson();
                 window.open(lesson.url, '_blank');
                 
-                // Mark as completed
-                completedLessons.add(currentIndex);
-                updateCompletedCount();
+                // Add to recent lessons
+                recentLessons.unshift({
+                    title: lesson.title,
+                    number: lesson.number,
+                    category: lesson.category
+                });
+                
+                // Keep only last 10
+                if (recentLessons.length > 10) {
+                    recentLessons.pop();
+                }
+                
+                // Mark as completed (store the actual lesson index)
+                const lessonIndex = isRandomMode ? randomOrder[currentIndex] : currentIndex;
+                completedLessons.add(lessonIndex);
+                
+                // Update random streak
+                if (isRandomMode) {
+                    randomStreak++;
+                } else {
+                    randomStreak = 0;
+                }
+                
+                updateStats();
+                updateRecentLessons();
                 saveProgress();
             }
         }
@@ -528,9 +769,30 @@
                 timeLeft = parseInt(speedSelect.value);
                 updateCountdown();
             } else {
-                // End of lessons
-                stopAutoPlay();
-                alert("🎉 Congratulations! You've completed all lessons!");
+                // End of lessons - reset
+                if (isRandomMode) {
+                    // Generate new random order
+                    generateRandomOrder();
+                    currentIndex = 0;
+                    updateDisplay();
+                    updateProgress();
+                    openCurrentLesson();
+                    timeLeft = parseInt(speedSelect.value);
+                    updateCountdown();
+                } else {
+                    // In chronological mode, start over or stop
+                    const restart = confirm("🎉 You've completed all lessons! Restart from beginning?");
+                    if (restart) {
+                        currentIndex = 0;
+                        updateDisplay();
+                        updateProgress();
+                        openCurrentLesson();
+                        timeLeft = parseInt(speedSelect.value);
+                        updateCountdown();
+                    } else {
+                        stopAutoPlay();
+                    }
+                }
             }
         }
         
@@ -548,6 +810,24 @@
             }
         }
         
+        // Skip to random lesson (new feature!)
+        function skipToRandom() {
+            // Generate new random index
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * filteredLessons.length);
+            } while (isRandomMode && newIndex === currentIndex && filteredLessons.length > 1);
+            
+            currentIndex = newIndex;
+            updateDisplay();
+            updateProgress();
+            openCurrentLesson();
+            
+            // Reset countdown
+            timeLeft = parseInt(speedSelect.value);
+            updateCountdown();
+        }
+        
         // Update countdown display
         function updateCountdown() {
             const minutes = Math.floor(timeLeft / 60);
@@ -562,9 +842,30 @@
             progressText.textContent = `${currentIndex + 1}/${filteredLessons.length}`;
         }
         
-        // Update completed count
-        function updateCompletedCount() {
+        // Update statistics
+        function updateStats() {
             completedCount.textContent = completedLessons.size;
+            uniqueCompleted.textContent = completedLessons.size;
+            randomStreakDisplay.textContent = randomStreak;
+            totalCount.textContent = filteredLessons.length;
+        }
+        
+        // Update recent lessons display
+        function updateRecentLessons() {
+            if (recentLessons.length === 0) {
+                recentList.innerHTML = '<div class="recent-lesson">No lessons yet</div>';
+                recentLessonsContainer.style.display = 'block';
+                return;
+            }
+            
+            recentList.innerHTML = recentLessons.map(lesson => `
+                <div class="recent-lesson">
+                    ${typeof lesson.number === 'number' ? `#${lesson.number}` : lesson.number} 
+                    ${lesson.title.substring(0, 15)}${lesson.title.length > 15 ? '...' : ''}
+                </div>
+            `).join('');
+            
+            recentLessonsContainer.style.display = 'block';
         }
         
         // Filter lessons by category
@@ -579,9 +880,16 @@
             
             // Reset to first lesson
             currentIndex = 0;
+            
+            // Regenerate random order if in random mode
+            if (isRandomMode) {
+                generateRandomOrder();
+            }
+            
             updateDisplay();
             updateProgress();
-            updateCompletedCount();
+            updateStats();
+            saveProgress();
         }
         
         // Save progress to localStorage
@@ -589,20 +897,28 @@
             const progress = {
                 currentIndex: currentIndex,
                 completed: Array.from(completedLessons),
+                recentLessons: recentLessons,
+                isRandomMode: isRandomMode,
+                randomStreak: randomStreak,
                 timestamp: new Date().toISOString()
             };
-            localStorage.setItem('dutchAutoPlayerProgress', JSON.stringify(progress));
+            localStorage.setItem('dutchRandomPlayerProgress', JSON.stringify(progress));
         }
         
         // Clear progress
         function clearProgress() {
             if (confirm('Clear all progress and start over?')) {
-                localStorage.removeItem('dutchAutoPlayerProgress');
+                localStorage.removeItem('dutchRandomPlayerProgress');
                 currentIndex = 0;
                 completedLessons.clear();
+                recentLessons = [];
+                randomStreak = 0;
+                isRandomMode = false;
+                updateModeDisplay();
                 updateDisplay();
                 updateProgress();
-                updateCompletedCount();
+                updateStats();
+                updateRecentLessons();
             }
         }
         
@@ -610,12 +926,16 @@
         startBtn.addEventListener('click', startAutoPlay);
         stopBtn.addEventListener('click', stopAutoPlay);
         skipBtn.addEventListener('click', nextLesson);
+        randomBtn.addEventListener('click', toggleRandomMode);
+        chronologicalBtn.addEventListener('click', toggleChronologicalMode);
+        
         speedSelect.addEventListener('change', function() {
             if (isPlaying) {
                 timeLeft = parseInt(this.value);
                 updateCountdown();
             }
         });
+        
         categorySelect.addEventListener('change', filterLessons);
         
         // Keyboard shortcuts
@@ -639,11 +959,25 @@
                 e.preventDefault();
                 prevLesson();
             }
+            // R for random skip (even in chronological mode)
+            if (e.code === 'KeyR' && e.ctrlKey) {
+                e.preventDefault();
+                skipToRandom();
+            }
+            // M to toggle mode
+            if (e.code === 'KeyM' && e.ctrlKey) {
+                e.preventDefault();
+                if (isRandomMode) {
+                    toggleChronologicalMode();
+                } else {
+                    toggleRandomMode();
+                }
+            }
         });
         
         // Add clear progress button
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = '🔄 Clear Progress';
+        clearBtn.textContent = '🗑️ Clear Progress';
         clearBtn.style.background = '#ff9800';
         clearBtn.addEventListener('click', clearProgress);
         clearBtn.addEventListener('mouseenter', () => {
@@ -653,8 +987,22 @@
             clearBtn.style.background = '#ff9800';
         });
         
+        // Add instant random button
+        const instantRandomBtn = document.createElement('button');
+        instantRandomBtn.textContent = '✨ Instant Random';
+        instantRandomBtn.style.background = '#e91e63';
+        instantRandomBtn.addEventListener('click', skipToRandom);
+        instantRandomBtn.addEventListener('mouseenter', () => {
+            instantRandomBtn.style.background = '#c2185b';
+        });
+        instantRandomBtn.addEventListener('mouseleave', () => {
+            instantRandomBtn.style.background = '#e91e63';
+        });
+        
         // Add to controls
-        document.querySelector('.controls').appendChild(clearBtn);
+        const controlsDiv = document.querySelector('.controls');
+        controlsDiv.parentNode.insertBefore(instantRandomBtn, controlsDiv.nextSibling);
+        controlsDiv.parentNode.insertBefore(clearBtn, instantRandomBtn.nextSibling);
         
         // Initialize
         init();
